@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import express, { NextFunction, Request, Response } from 'express';
 import winston from 'winston';

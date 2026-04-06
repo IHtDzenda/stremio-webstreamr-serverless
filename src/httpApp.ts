@@ -13,7 +13,7 @@ import { Fetcher } from './utils/Fetcher';
 import { StreamResolver } from './utils/StreamResolver';
 import { getDefaultConfig } from './utils/config';
 import { buildManifest } from './utils/manifest';
-import { envIsProd, isElfHostedInstance, setRuntimeEnv } from './utils/env';
+import { envIsProd, isElfHostedInstance, isWorkersLikeRuntime, setRuntimeEnv } from './utils/env';
 import { Id, ImdbId, TmdbId } from './utils/id';
 
 interface RuntimeEnv {
@@ -35,17 +35,48 @@ let lastLiveProbeRequestsTimestamp = 0;
 
 const streamLocks = new Map<string, Mutex>();
 
-const createLogger = (): winston.Logger => winston.createLogger({
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.cli(),
-        winston.format.timestamp(),
-        winston.format.printf(({ level, message, timestamp, id }) => `${timestamp} ${level} ${id}: ${message}`),
-      ),
-    }),
-  ],
-});
+const createWorkersLogger = (): winston.Logger => {
+  const write = (level: 'info' | 'warn' | 'error', message: string, ctx?: Context): void => {
+    const timestamp = new Date().toISOString();
+    const prefix = `${timestamp} ${level}${ctx?.id ? ` ${ctx.id}` : ''}: ${message}`;
+
+    if (level === 'error') {
+      console.error(prefix);
+      return;
+    }
+
+    if (level === 'warn') {
+      console.warn(prefix);
+      return;
+    }
+
+    console.log(prefix);
+  };
+
+  return {
+    info: (message: string, ctx?: Context) => write('info', message, ctx),
+    warn: (message: string, ctx?: Context) => write('warn', message, ctx),
+    error: (message: string, ctx?: Context) => write('error', message, ctx),
+  } as unknown as winston.Logger;
+};
+
+const createLogger = (): winston.Logger => {
+  if (isWorkersLikeRuntime()) {
+    return createWorkersLogger();
+  }
+
+  return winston.createLogger({
+    transports: [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.cli(),
+          winston.format.timestamp(),
+          winston.format.printf(({ level, message, timestamp, id }) => `${timestamp} ${level} ${id}: ${message}`),
+        ),
+      }),
+    ],
+  });
+};
 
 const getEnvKey = (env: RuntimeEnv): string => JSON.stringify(Object.entries(env).sort(([a], [b]) => a.localeCompare(b)));
 
