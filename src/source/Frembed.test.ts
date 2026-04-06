@@ -1,5 +1,6 @@
 import { createTestContext } from '../test';
-import { FetcherMock, ImdbId, TmdbId } from '../utils';
+import { ImdbId, TmdbId } from '../utils';
+import { FetcherMock } from '../utils/FetcherMock';
 import { Frembed } from './Frembed';
 
 const ctx = createTestContext({ fr: 'on' });

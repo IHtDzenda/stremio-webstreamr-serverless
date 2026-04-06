@@ -1,4 +1,5 @@
-import { envGet, Fetcher } from '../utils';
+import { Fetcher } from '../utils/Fetcher';
+import { envGet } from '../utils/env';
 import { CineHDPlus } from './CineHDPlus';
 import { Cuevana } from './Cuevana';
 import { Einschalten } from './Einschalten';

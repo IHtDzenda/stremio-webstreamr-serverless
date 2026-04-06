@@ -1,9 +1,7 @@
-// eslint-disable-next-line import/no-named-as-default
-import KeyvSqlite from '@keyv/sqlite';
 import { Cacheable, CacheableMemory, Keyv } from 'cacheable';
 import winston from 'winston';
 import { Context, Meta, UrlResult } from '../types';
-import { getCacheDir, isExtractorDisabled } from '../utils';
+import { isExtractorDisabled } from '../utils';
 import { Extractor } from './Extractor';
 
 export class ExtractorRegistry {
@@ -17,7 +15,6 @@ export class ExtractorRegistry {
 
     this.urlResultCache = new Cacheable({
       primary: new Keyv({ store: new CacheableMemory({ lruSize: 1024 }) }),
-      secondary: new Keyv(new KeyvSqlite(`sqlite://${getCacheDir()}/webstreamr-extractor-cache.sqlite`)),
       stats: true,
     });
   }

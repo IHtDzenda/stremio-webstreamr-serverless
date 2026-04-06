@@ -1,10 +1,8 @@
-// eslint-disable-next-line import/no-named-as-default
-import KeyvSqlite from '@keyv/sqlite';
 import { Cacheable, CacheableMemory, Keyv } from 'cacheable';
 import { ContentType } from 'stremio-addon-sdk';
 import { NotFoundError } from '../error';
 import { Context, CountryCode, Meta } from '../types';
-import { getCacheDir, Id } from '../utils';
+import { Id } from '../utils';
 
 export interface SourceResult {
   url: URL;
@@ -26,7 +24,6 @@ export abstract class Source {
 
   private static readonly sourceResultCache = new Cacheable({
     primary: new Keyv({ store: new CacheableMemory({ lruSize: 1024 }) }),
-    secondary: new Keyv(new KeyvSqlite(`sqlite://${getCacheDir()}/webstreamr-source-cache-v2.sqlite`)),
     stats: true,
   });
 

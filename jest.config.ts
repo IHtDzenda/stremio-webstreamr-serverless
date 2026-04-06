@@ -14,6 +14,9 @@ const config: Config = {
   coveragePathIgnorePatterns: [
     '/src/controller/',
     '/src/utils/dispatcher.ts',
+    '/src/httpApp.ts',
+    '/src/nodeAdapter.ts',
+    '/src/worker.ts',
   ],
   coverageProvider: 'babel',
   coverageThreshold: {

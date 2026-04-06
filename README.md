@@ -10,6 +10,11 @@
 
 A public instance is available at https://webstreamr.hayd.uk. Hosting infrastructure for this instance is donated by [ElfHosted](https://elfhosted.com), and independently maintained by [Hayduk](https://hayd.uk).
 
+## One-click deploy
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/webstreamr/webstreamr)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/webstreamr/webstreamr&project-name=webstreamr&repository-name=webstreamr)
+
 ## MediaFlow Proxy
 
 [MediaFlow Proxy](https://github.com/mhdzumair/mediaflow-proxy/) can be added when configuration the add-on to gain access to a couple of more file hosters.
@@ -84,15 +89,30 @@ Optional. Add-on manifest name. Default: `WebStreamr`
 
 Optional. Port of the node web server. Default: `51546`
 
-#### `PROXY_CONFIG`
-
-Optional. Proxies which should be used based on domain. Supports minimatch. E.g. `dood.to:http://USERNAME:PASSWORD@IP:PORT,*:socks5://172.17.0.1:1080` would use an http proxy for dood.to and a socks5 proxy for all other domains.
-
-Some hosters are a bit picky when it comes to IPs. Best case is if you use a residential IP.
-If you can't do that, then I suggest to use a VPN / proxy like Cloudflare WARP.
-DoodStream is not working with WARP.
-Free Webshare proxies seem to work with it.
-
 #### `TMDB_ACCESS_TOKEN`
 
 **Required**. TMDB access token to get information like title and year for content. Use the [API Read Access Token](https://www.themoviedb.org/settings/api).
+
+### Cloudflare Workers
+
+Cloudflare Workers is supported through [`wrangler.toml`](./wrangler.toml) and the [`src/worker.ts`](./src/worker.ts) entrypoint.
+
+```shell
+npm run deploy:cloudflare
+```
+
+Set `TMDB_ACCESS_TOKEN` as a Worker secret or variable before deployment.
+
+Notes:
+
+- The Workers runtime uses in-memory caches only. There is no persistent SQLite cache.
+
+### Vercel
+
+Vercel is supported through the catch-all API route in [`api/[[...route]].ts`](./api/[[...route]].ts) plus [`vercel.json`](./vercel.json).
+
+```shell
+npm run preview:vercel
+```
+
+Set `TMDB_ACCESS_TOKEN` in the Vercel project environment variables before deploying.

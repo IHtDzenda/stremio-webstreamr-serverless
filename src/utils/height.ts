@@ -1,13 +1,9 @@
-// eslint-disable-next-line import/no-named-as-default
-import KeyvSqlite from '@keyv/sqlite';
 import { Cacheable, CacheableMemory, Keyv } from 'cacheable';
 import { Context } from '../types';
-import { getCacheDir } from './env';
 import { CustomRequestInit, Fetcher } from './Fetcher';
 
 const playlistHeightCache = new Cacheable({
   primary: new Keyv({ store: new CacheableMemory({ lruSize: 16384 }) }),
-  secondary: new Keyv(new KeyvSqlite(`sqlite://${getCacheDir()}/webstreamr-playlist-height-cache.sqlite`)),
 });
 
 export const guessHeightFromPlaylist = async (ctx: Context, fetcher: Fetcher, playlistUrl: URL, embedUrl: URL, init?: CustomRequestInit): Promise<number | undefined> => {

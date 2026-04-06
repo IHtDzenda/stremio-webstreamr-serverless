@@ -55,6 +55,37 @@ describe('fetch', () => {
     });
   });
 
+  test('falls back to Buffer base64 encoding when btoa is unavailable', () => {
+    const previousBtoa = globalThis.btoa;
+
+    // @ts-expect-error test override
+    delete globalThis.btoa;
+    expect(fetcher['toBase64']('user:pass')).toBe('dXNlcjpwYXNz');
+
+    globalThis.btoa = previousBtoa;
+  });
+
+  test('uses runtime fetch on workers-like platforms', async () => {
+    const previousWebSocketPair = (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair;
+    const previousFetch = globalThis.fetch;
+    const workerFetch = jest.fn(async () => new Response('worker response', { status: 200 }));
+
+    (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair = () => undefined;
+    globalThis.fetch = workerFetch as typeof fetch;
+
+    const response = await fetcher['runFetch'](new URL('https://worker-fetch.test/'), { method: 'GET' });
+
+    expect(await response.text()).toBe('worker response');
+    expect(workerFetch).toHaveBeenCalled();
+
+    globalThis.fetch = previousFetch;
+    if (previousWebSocketPair === undefined) {
+      delete (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair;
+    } else {
+      (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair = previousWebSocketPair;
+    }
+  });
+
   test('textPost ', async () => {
     const mockPool = mockAgent.get('https://some-post-url.test');
     mockPool.intercept({ path: '/', method: 'POST' }).reply(200, 'some text');

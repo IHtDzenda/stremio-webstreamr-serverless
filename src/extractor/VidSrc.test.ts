@@ -1,7 +1,8 @@
 import { MockAgent, setGlobalDispatcher } from 'undici';
 import winston from 'winston';
 import { createTestContext } from '../test';
-import { Fetcher, FetcherMock } from '../utils';
+import { Fetcher } from '../utils';
+import { FetcherMock } from '../utils/FetcherMock';
 import { ExtractorRegistry } from './ExtractorRegistry';
 import { VidSrc } from './VidSrc';
 
