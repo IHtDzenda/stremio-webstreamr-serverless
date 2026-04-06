@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { Mutex, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
 import { Cacheable, CacheableMemory, Keyv } from 'cacheable';
 import CachePolicy from 'http-cache-semantics';
@@ -7,8 +6,6 @@ import winston from 'winston';
 import { BlockedError, HttpError, NotFoundError, QueueIsFullError, TimeoutError, TooManyRequestsError, TooManyTimeoutsError } from '../error';
 import { BlockedReason, Context } from '../types';
 import { envGet, isWorkersLikeRuntime } from './env';
-
-const nodeRequire = createRequire(__filename);
 
 export interface HttpCacheItem {
   body: string;
@@ -422,6 +419,9 @@ export class Fetcher {
       return await fetch(url, init);
     }
 
+    // Resolve undici lazily so Workers never evaluate Node-only require setup.
+    const { createRequire } = require('node:module') as typeof import('node:module');
+    const nodeRequire = createRequire(process.cwd() + '/package.json');
     const { fetch: undiciFetch } = nodeRequire('undici') as { fetch: typeof fetch };
 
     return await undiciFetch(url, init);
