@@ -1,4 +1,5 @@
-import { envGet, Fetcher } from '../utils';
+import { Fetcher } from '../utils/Fetcher';
+import { envGet } from '../utils/env';
 import { DoodStream } from './DoodStream';
 import { Dropload } from './Dropload';
 import { ExternalUrl } from './ExternalUrl';

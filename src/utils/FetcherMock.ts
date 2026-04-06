@@ -3,12 +3,11 @@ import crypto from 'crypto';
 import fs from 'node:fs';
 import CachePolicy from 'http-cache-semantics';
 import slugify from 'slugify';
-import { RequestInit } from 'undici';
 import winston from 'winston';
 import { NotFoundError } from '../error';
 import { Context } from '../types';
 import { envGet } from './env';
-import { Fetcher, HttpCacheItem } from './Fetcher';
+import { CustomRequestInit, Fetcher, HttpCacheItem } from './Fetcher';
 
 export class FetcherMock extends Fetcher {
   private readonly fixturePath: string;
@@ -19,7 +18,7 @@ export class FetcherMock extends Fetcher {
     this.fixturePath = fixturePath;
   }
 
-  public override async fetch(ctx: Context, url: URL, init?: RequestInit): Promise<HttpCacheItem> {
+  public override async fetch(ctx: Context, url: URL, init?: CustomRequestInit): Promise<HttpCacheItem> {
     let path: string;
 
     if (init?.method === 'POST') {
@@ -34,19 +33,19 @@ export class FetcherMock extends Fetcher {
     return this.fetchInternal(path, ctx, url, init);
   };
 
-  public override async text(ctx: Context, url: URL, init?: RequestInit): Promise<string> {
+  public override async text(ctx: Context, url: URL, init?: CustomRequestInit): Promise<string> {
     const path = `${this.fixturePath}/${this.slugifyUrl(url)}`;
 
     return (await this.fetchInternal(path, ctx, url, init)).body;
   };
 
-  public override async textPost(ctx: Context, url: URL, body: string, init?: RequestInit): Promise<string> {
+  public override async textPost(ctx: Context, url: URL, body: string, init?: CustomRequestInit): Promise<string> {
     const path = `${this.fixturePath}/post-${this.slugifyUrl(url)}-${slugify(body)}`;
 
     return (await this.fetchInternal(path, ctx, url, { ...init, method: 'POST', body })).body;
   };
 
-  public override async head(ctx: Context, url: URL, init?: RequestInit): Promise<CachePolicy.Headers> {
+  public override async head(ctx: Context, url: URL, init?: CustomRequestInit): Promise<CachePolicy.Headers> {
     const path = `${this.fixturePath}/head-${this.slugifyUrl(url)}`;
 
     return (await this.fetchInternal(path, ctx, url, { ...init, method: 'HEAD' })).headers;
@@ -62,7 +61,7 @@ export class FetcherMock extends Fetcher {
     return slugifiedUrl;
   };
 
-  private readonly fetchInternal = async (path: string, ctx: Context, url: URL, init?: RequestInit): Promise<HttpCacheItem> => {
+  private readonly fetchInternal = async (path: string, ctx: Context, url: URL, init?: CustomRequestInit): Promise<HttpCacheItem> => {
     const errorPath = `${path}.error`;
 
     const isHead = init?.method === 'HEAD';

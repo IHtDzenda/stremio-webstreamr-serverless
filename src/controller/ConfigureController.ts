@@ -25,7 +25,7 @@ export class ConfigureController {
     const config: Config = JSON.parse(req.params['config'] || JSON.stringify(getDefaultConfig()));
 
     // Convenience preset for ElfHosted WebStreamr bundle including Media Flow Proxy
-    if (!req.params['config'] && isElfHostedInstance(req)) {
+    if (!req.params['config'] && isElfHostedInstance(req.host)) {
       config.mediaFlowProxyUrl = `${req.protocol}://${req.host.replace('webstreamr', 'mediaflow-proxy')}`;
     }
 

@@ -1,5 +1,6 @@
 import { createTestContext } from '../test';
-import { FetcherMock, TmdbId } from '../utils';
+import { TmdbId } from '../utils';
+import { FetcherMock } from '../utils/FetcherMock';
 import { Kokoshka } from './Kokoshka';
 
 const ctx = createTestContext({ al: 'on' });

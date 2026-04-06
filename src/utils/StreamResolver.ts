@@ -48,6 +48,7 @@ export class StreamResolver {
 
       try {
         const sourceResults = await source.handle(ctx, type, id);
+        this.logger.info(`Source ${source.id} returned ${sourceResults.length} candidate urls`, ctx);
 
         const sourceUrlResults = await Promise.all(
           sourceResults.map(({ url, meta }) => this.extractorRegistry.handle(ctx, url, { ...meta, sourceLabel: source.label })),
@@ -56,17 +57,24 @@ export class StreamResolver {
         urlResults.push(...sourceUrlResults.flat());
       } catch (error) {
         sourceErrorCount++;
+        const niceError = logErrorAndReturnNiceString(ctx, this.logger, source.id, error);
 
         if (showErrors(ctx.config)) {
           streams.push({
             name: envGetAppName(),
-            title: [`🔗 ${source.label}`, logErrorAndReturnNiceString(ctx, this.logger, source.id, error)].join('\n'),
+            title: [`🔗 ${source.label}`, niceError].join('\n'),
             externalUrl: source.baseUrl,
           });
         }
       }
     });
     await Promise.all(sourcePromises);
+
+    urlResults
+      .filter((urlResult) => urlResult.error)
+      .forEach((urlResult) => {
+        logErrorAndReturnNiceString(ctx, this.logger, urlResult.sourceId, urlResult.error);
+      });
 
     urlResults.sort((a, b) => {
       if (a.error || b.error) {

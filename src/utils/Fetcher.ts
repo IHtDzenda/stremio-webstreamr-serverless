@@ -1,14 +1,11 @@
-import { gunzipSync, gzipSync } from 'zlib';
 import { Mutex, Semaphore, SemaphoreInterface, withTimeout } from 'async-mutex';
 import { Cacheable, CacheableMemory, Keyv } from 'cacheable';
 import CachePolicy from 'http-cache-semantics';
 import { Cookie, CookieJar } from 'tough-cookie';
-import { fetch, Headers, RequestInit, Response } from 'undici';
 import winston from 'winston';
 import { BlockedError, HttpError, NotFoundError, QueueIsFullError, TimeoutError, TooManyRequestsError, TooManyTimeoutsError } from '../error';
 import { BlockedReason, Context } from '../types';
-import { getProxyAgent, getProxyForUrl } from './dispatcher';
-import { envGet } from './env';
+import { envGet, isWorkersLikeRuntime } from './env';
 
 export interface HttpCacheItem {
   body: string;
@@ -128,7 +125,7 @@ export class Fetcher {
       headers: {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en',
-        ...(url.username && { Authorization: 'Basic ' + Buffer.from(`${url.username}:${url.password}`).toString('base64') }),
+        ...(url.username && { Authorization: 'Basic ' + this.toBase64(`${url.username}:${url.password}`) }),
         'Priority': 'u=0',
         'User-Agent': this.hostUserAgentMap.get(url.host) ?? 'node',
         ...(cookieString && { Cookie: cookieString }),
@@ -231,9 +228,7 @@ export class Fetcher {
   };
 
   private async cacheGet(key: string): Promise<HttpCacheItem | undefined> {
-    const buffer = await this.httpCache.get<Buffer>(key);
-
-    return buffer ? JSON.parse(gunzipSync(buffer).toString()) : undefined;
+    return await this.httpCache.get<HttpCacheItem>(key);
   }
 
   private async cacheSet(key: string, httpCacheItem: HttpCacheItem) {
@@ -241,7 +236,7 @@ export class Fetcher {
       return;
     }
 
-    await this.httpCache.set<Buffer>(key, gzipSync(JSON.stringify(httpCacheItem)), httpCacheItem.ttl);
+    await this.httpCache.set<HttpCacheItem>(key, httpCacheItem, httpCacheItem.ttl);
   }
 
   private headersToObject(headers: Headers): Record<string, string> {
@@ -281,17 +276,11 @@ export class Fetcher {
   };
 
   protected async fetchWithTimeout(ctx: Context, url: URL, init?: CustomRequestInit, tryCount = 0): Promise<Response> {
-    const proxyUrl = getProxyForUrl(url);
-
     const headers = init?.headers as Record<string, string> | undefined;
     let message = `Fetch ${init?.method ?? 'GET'} ${url}`;
     /* istanbul ignore if */
     if (headers && headers['Referer']) {
       message += ' with referer ' + headers['Referer'];
-    }
-    /* istanbul ignore if */
-    if (proxyUrl) {
-      message += ' via proxy ' + proxyUrl;
     }
     this.logger.info(message, ctx);
 
@@ -325,10 +314,9 @@ export class Fetcher {
         ...init,
         keepalive: true,
         signal: AbortSignal.timeout(init?.timeout ?? this.DEFAULT_TIMEOUT),
-        ...(/* istanbul ignore next */ proxyUrl && { dispatcher: getProxyAgent(proxyUrl) }),
       };
 
-      response = await fetch(finalUrl, finalInit);
+      response = await this.runFetch(finalUrl, finalInit);
     } catch (error) {
       this.logger.info(`Got error ${error} for ${url}`, ctx);
 
@@ -416,5 +404,26 @@ export class Fetcher {
 
   private sleep(ms: number): Promise<void> {
     return new Promise(sleep => setTimeout(sleep, ms));
+  }
+
+  private toBase64(value: string): string {
+    if (typeof btoa === 'function') {
+      return btoa(value);
+    }
+
+    return Buffer.from(value).toString('base64');
+  }
+
+  private async runFetch(url: URL, init: RequestInit): Promise<Response> {
+    if (isWorkersLikeRuntime()) {
+      return await fetch(url, init);
+    }
+
+    // Resolve undici lazily so Workers never evaluate Node-only require setup.
+    const { createRequire } = require('node:module') as typeof import('node:module');
+    const nodeRequire = createRequire(process.cwd() + '/package.json');
+    const { fetch: undiciFetch } = nodeRequire('undici') as { fetch: typeof fetch };
+
+    return await undiciFetch(url, init);
   }
 }

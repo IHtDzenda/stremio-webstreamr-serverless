@@ -1,6 +1,6 @@
 import winston from 'winston';
 import { createTestContext } from '../test';
-import { FetcherMock } from '../utils';
+import { FetcherMock } from '../utils/FetcherMock';
 import { DoodStream } from './DoodStream';
 import { ExtractorRegistry } from './ExtractorRegistry';
 

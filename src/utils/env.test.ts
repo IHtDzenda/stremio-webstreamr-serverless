@@ -1,9 +1,17 @@
 import * as os from 'node:os';
 import { Request } from 'express';
-import { envGet, envGetAppId, envGetAppName, envGetRequired, envIsProd, getCacheDir, isElfHostedInstance } from './env';
+import { envGet, envGetAppId, envGetAppName, envGetRequired, envIsProd, getCacheDir, isElfHostedInstance, isWorkersLikeRuntime, setRuntimeEnv } from './env';
 
 describe('env', () => {
   test('envGet', () => {
+    expect(envGet('NODE_ENV')).toBe('test');
+  });
+
+  test('runtime env overrides process env', () => {
+    setRuntimeEnv({ NODE_ENV: 'runtime-test' });
+    expect(envGet('NODE_ENV')).toBe('runtime-test');
+
+    setRuntimeEnv({});
     expect(envGet('NODE_ENV')).toBe('test');
   });
 
@@ -43,6 +51,23 @@ describe('env', () => {
   test('isElfHostedInstancce', () => {
     expect(isElfHostedInstance({ host: 'someuser.elfhosted.com' } as Request)).toBeTruthy();
     expect(isElfHostedInstance({ host: 'webstreamr.hayd.uk' } as Request)).toBeFalsy();
+    expect(isElfHostedInstance('worker.elfhosted.com')).toBeTruthy();
+  });
+
+  test('isWorkersLikeRuntime', () => {
+    const previousWebSocketPair = (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair;
+
+    delete (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair;
+    expect(isWorkersLikeRuntime()).toBeFalsy();
+
+    (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair = () => undefined;
+    expect(isWorkersLikeRuntime()).toBeTruthy();
+
+    if (previousWebSocketPair === undefined) {
+      delete (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair;
+    } else {
+      (globalThis as typeof globalThis & { WebSocketPair?: unknown }).WebSocketPair = previousWebSocketPair;
+    }
   });
 
   test('getCacheDir', () => {

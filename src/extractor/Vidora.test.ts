@@ -1,6 +1,6 @@
 import winston from 'winston';
 import { createTestContext } from '../test';
-import { FetcherMock } from '../utils';
+import { FetcherMock } from '../utils/FetcherMock';
 import { ExtractorRegistry } from './ExtractorRegistry';
 import { Vidora } from './Vidora';
 
