@@ -1,4 +1,5 @@
-# WebStreamr
+# WebStreamr serverless fork
+> ⚠ NOTE: This is only for educational purposes.
 
 [Stremio](https://www.stremio.com/) add-on which provides HTTP URLs from streaming websites.
 
@@ -8,14 +9,9 @@
 
 or 
 
+Vercel is recommended because cloudflare IPS get blocked on most providers by cloudflares own protection.
+
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/IHtDzenda/stremio-webstreamr-serverless&project-name=stremio-webstreamr-serverless&repository-name=stremio-webstreamr-serverless)
-
-### ElfHosted (easy mode)
-
-Self-hosting to stressful? ElfHosted offer [ready-to-go, turn-key WebStreamr instances](https://store.elfhosted.com/product/webstreamr/) with $1, 7-day trials. Additionally, 33% of your subscription directly supports your developer! ❤️
-
-(*ElfHosted also offer advanced private hosting of the [top Stremio Addons](https://store.elfhosted.com/product-category/stremio-addons/elf/webstreamr/), as well as [turn-key bundles providing streaming from RealDebrid with Plex, Emby, or Jellyfin](https://store.elfhosted.com/product-category/streaming-bundles/elf/webstreamr/)*)
-
 
 ### Environment variables
 

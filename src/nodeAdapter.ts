@@ -1,14 +1,16 @@
 import { Readable } from 'node:stream';
 import { IncomingMessage, ServerResponse } from 'node:http';
 
-const buildRequestUrl = (req: IncomingMessage): string => {
-  const protocol = req.headers['x-forwarded-proto'] ?? 'https';
+const buildRequestUrl = (req: IncomingMessage, pathnameOverride?: string): string => {
+  const protocol = req.headers['x-forwarded-proto'] ?? 'http';
   const host = req.headers.host ?? 'localhost';
+  const reqUrl = new URL(req.url ?? '/', `${protocol}://${host}`);
+  const pathname = pathnameOverride ?? reqUrl.pathname;
 
-  return `${protocol}://${host}${req.url ?? '/'}`;
+  return `${protocol}://${host}${pathname}${reqUrl.search}`;
 };
 
-export const toWebRequest = (req: IncomingMessage): Request => {
+export const toWebRequest = (req: IncomingMessage, pathnameOverride?: string): Request => {
   const method = req.method ?? 'GET';
   const headers = new Headers();
 
@@ -35,7 +37,7 @@ export const toWebRequest = (req: IncomingMessage): Request => {
     init.duplex = 'half';
   }
 
-  return new Request(buildRequestUrl(req), init);
+  return new Request(buildRequestUrl(req, pathnameOverride), init);
 };
 
 export const sendWebResponse = async (res: ServerResponse, response: Response): Promise<void> => {
